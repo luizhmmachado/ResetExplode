@@ -2217,15 +2217,15 @@
                             <!-- Serviços -->
                             <Border Grid.Column="2" Style="{StaticResource CardBorder}" VerticalAlignment="Top">
                                 <StackPanel>
-                                    <Grid Margin="0,0,0,6">
+                                    <StackPanel Margin="0,0,0,6">
                                         <TextBlock Text="SERVIÇOS DESNECESSÁRIOS ABERTOS" Style="{StaticResource Label}"/>
-                                        <WrapPanel HorizontalAlignment="Right" VerticalAlignment="Top">
+                                        <WrapPanel Margin="0,0,0,2">
                                             <Button x:Name="BtnRefreshServices" Style="{StaticResource OutlineButton}" Content="ATUALIZAR"
                                                     Padding="10,4" FontSize="11" Margin="0,0,8,0" Click="BtnRefreshServices_Click"/>
                                             <Button x:Name="BtnStopServices" Style="{StaticResource OutlineButton}" Content="ENCERRAR SELECIONADOS"
                                                     Padding="10,4" FontSize="11" Click="BtnStopServices_Click"/>
                                         </WrapPanel>
-                                    </Grid>
+                                    </StackPanel>
                                     <TextBlock Foreground="{DynamicResource Faint}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,10">
                                         Serviços que rodam em segundo plano e podem ser encerrados durante o jogo para liberar RAM e CPU.
                                         Os marcados são seguros para a maioria dos PCs; os demais dependem do seu uso (impressora, busca,
