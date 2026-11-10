@@ -1,3 +1,16 @@
+## Novidades da v0.17
+
+**RESET OTIMIZA · Limpeza do sistema**
+- **Esvaziar lixeira**: limpa a lixeira de todas as unidades e mostra quanto espaço foi liberado.
+- **Limpar temporários**: apaga o conteúdo de todas as pastas temporárias (de cada usuário e do Windows), o cache de
+  atualizações do Windows, a Otimização de Entrega, relatórios de erro e o cache de shaders das GPUs. Arquivos em uso são
+  mantidos, então dá para limpar com o PC ligado; o Prefetch é preservado porque acelera a abertura de programas e jogos.
+- **Limpar cache DNS**: resolve na hora endereços de servidores/lobby que mudaram.
+- **Serviços desnecessários abertos**: lista os serviços opcionais em execução (telemetria, relatórios de erro, fax, registro
+  remoto, localização, Xbox/Game Pass, Bluetooth, impressão...) com os seguros já marcados. Encerrar não desinstala nada:
+  tudo volta ao reiniciar o Windows.
+- **Limpeza completa**: roda lixeira + temporários + DNS + serviços marcados em um clique.
+
 ## Novidades da v0.16
 
 **Nova página · RESET FERRAMENTAS › Inicialização**

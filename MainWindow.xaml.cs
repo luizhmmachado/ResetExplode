@@ -62,6 +62,7 @@ public partial class MainWindow : Window
 
     // RESET OTIMIZA
     private List<BackgroundApp> _apps = new();
+    private List<OptionalService> _services = new();
     private readonly List<Tweak> _tweaks = WindowsTweaks.All(); // só as definições; o estado é lido ao abrir a página
     private bool _optInit;
 
@@ -826,7 +827,7 @@ public partial class MainWindow : Window
     // ---------------- RESET OTIMIZA ----------------
 
     /// <summary>Carrega a página RESET OTIMIZA quando ela é aberta (os ajustes do Windows só na primeira vez).</summary>
-    private void InitOptimize()
+    private async void InitOptimize()
     {
         if (!_optInit)
         {
@@ -837,6 +838,7 @@ public partial class MainWindow : Window
         }
         RefreshApps();
         UpdateRamStatus();
+        await RefreshServicesAsync();
     }
 
     private void UpdateRamStatus()
@@ -855,6 +857,174 @@ public partial class MainWindow : Window
     }
 
     private void BtnRefreshApps_Click(object sender, RoutedEventArgs e) => RefreshApps();
+
+    // ----- Limpeza do sistema (lixeira, temporários, DNS) e serviços opcionais -----
+
+    private async Task<string> RefreshServicesAsync()
+    {
+        ServicesResult.Text = "Lendo os serviços…";
+        try
+        {
+            _services = await Task.Run(SystemCleanup.ListServices);
+            OptServices.ItemsSource = _services;
+            int running = _services.Count(s => s.Running);
+            int selected = _services.Count(s => s.Selected);
+            string summary = running == 0
+                ? "Nenhum serviço opcional em execução."
+                : $"{running} serviços opcionais em execução · {selected} marcados para encerrar.";
+            ServicesResult.Text = summary;
+            return summary;
+        }
+        catch (Exception ex)
+        {
+            string error = $"Não foi possível listar os serviços: {ex.Message}";
+            ServicesResult.Text = error;
+            return error;
+        }
+    }
+
+    private void BtnRefreshServices_Click(object sender, RoutedEventArgs e) => _ = RefreshServicesAsync();
+
+    private async void BtnEmptyRecycle_Click(object sender, RoutedEventArgs e)
+    {
+        var r = MessageBox.Show("Esvaziar a lixeira de todas as unidades?\n\n" +
+                                "Os arquivos da lixeira não poderão ser recuperados. Continuar?",
+                                "RESET OTIMIZA", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (r != MessageBoxResult.Yes) return;
+        await RunCleanup("Esvaziando a lixeira…", SystemCleanup.EmptyRecycleBin);
+    }
+
+    private async void BtnCleanTemp_Click(object sender, RoutedEventArgs e)
+    {
+        var r = MessageBox.Show("Apagar os arquivos temporários do Windows e de todos os usuários?\n\n" +
+                                "Inclui %TEMP% de cada conta, C:\\Windows\\Temp, cache de atualizações do Windows,\n" +
+                                "Otimização de Entrega, relatórios de erro e cache de shaders (os jogos recompilam na primeira vez).\n\n" +
+                                "Arquivos em uso são mantidos. Continuar?",
+                                "RESET OTIMIZA", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (r != MessageBoxResult.Yes) return;
+        await RunCleanup("Limpando os arquivos temporários…", SystemCleanup.CleanTemporaryFiles);
+    }
+
+    private async void BtnFlushDns_Click(object sender, RoutedEventArgs e)
+    {
+        SetCleanBusy(true);
+        CleanResult.Text = "Limpando o cache DNS…";
+        try
+        {
+            await Task.Run(SystemCleanup.FlushDns);
+            CleanResult.Text = "Cache DNS limpo. Endereços que mudaram passam a ser resolvidos na hora.";
+        }
+        catch (Exception ex) { CleanResult.Text = $"Falhou: {ex.Message}"; }
+        finally { SetCleanBusy(false); }
+    }
+
+    private async void BtnCleanAll_Click(object sender, RoutedEventArgs e)
+    {
+        var toStop = _services.Where(s => s.Selected && s.Running).ToList();
+        string services = toStop.Count == 0 ? "nenhum serviço marcado" : string.Join(", ", toStop.Select(s => s.Title));
+        var r = MessageBox.Show("A LIMPEZA COMPLETA vai:\n\n" +
+                                "1. Esvaziar a lixeira de todas as unidades.\n" +
+                                "2. Apagar temporários de todos os usuários, do Windows e caches (Windows Update, shaders, erros).\n" +
+                                "3. Limpar o cache DNS.\n" +
+                                $"4. Encerrar os serviços marcados:\n  {services}\n\n" +
+                                "Arquivos em uso são mantidos. Continuar?",
+                                "RESET OTIMIZA", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (r != MessageBoxResult.Yes) return;
+
+        SetCleanBusy(true);
+        CleanResult.Text = "Limpando…";
+        try
+        {
+            var (recycle, temp) = await Task.Run(() => (SystemCleanup.EmptyRecycleBin(), SystemCleanup.CleanTemporaryFiles()));
+            await Task.Run(SystemCleanup.FlushDns);
+            ServiceStopResult? stop = null;
+            if (toStop.Count > 0)
+                stop = await Task.Run(() => SystemCleanup.StopServices(toStop.Select(s => s.Name)));
+
+            var parts = new List<string> { DescribeCleanup(recycle.FreedBytes + temp.FreedBytes, temp.Files, temp.Skipped, temp.Folders) };
+            if (recycle.Error != null) parts.Add($"lixeira: {recycle.Error}");
+            parts.Add("cache DNS limpo");
+            if (stop != null) parts.Add(DescribeStop(stop));
+            CleanResult.Text = string.Join(" · ", parts) + ".";
+
+            if (toStop.Count > 0)
+            {
+                string summary = await RefreshServicesAsync();
+                ServicesResult.Text = $"{DescribeStop(stop!)} · {summary}";
+            }
+        }
+        catch (Exception ex) { CleanResult.Text = $"Falhou: {ex.Message}"; }
+        finally { SetCleanBusy(false); }
+    }
+
+    private async void BtnStopServices_Click(object sender, RoutedEventArgs e)
+    {
+        var selected = _services.Where(s => s.Selected && s.Running).ToList();
+        if (selected.Count == 0)
+        {
+            MessageBox.Show("Marque ao menos um serviço em execução para encerrar.", "RESET OTIMIZA",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        string list = string.Join("\n", selected.Select(s => $"  • {s.Title}"));
+        var r = MessageBox.Show($"Encerrar {selected.Count} serviços agora?\n\n{list}\n\n" +
+                                "Eles não são desinstalados: voltam ao normal no próximo reinício do Windows. Continuar?",
+                                "RESET OTIMIZA", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (r != MessageBoxResult.Yes) return;
+
+        SetCleanBusy(true);
+        ServicesResult.Text = "Encerrando os serviços…";
+        try
+        {
+            var stop = await Task.Run(() => SystemCleanup.StopServices(selected.Select(s => s.Name)));
+            string summary = await RefreshServicesAsync();
+            ServicesResult.Text = $"{DescribeStop(stop)} · {summary}";
+        }
+        catch (Exception ex) { ServicesResult.Text = $"Falhou: {ex.Message}"; }
+        finally { SetCleanBusy(false); }
+    }
+
+    private async Task RunCleanup(string status, Func<CleanupReport> action)
+    {
+        SetCleanBusy(true);
+        CleanResult.Text = status;
+        try
+        {
+            var report = await Task.Run(action);
+            CleanResult.Text = DescribeCleanup(report.FreedBytes, report.Files, report.Skipped, report.Folders, report.Error);
+        }
+        catch (Exception ex) { CleanResult.Text = $"Falhou: {ex.Message}"; }
+        finally { SetCleanBusy(false); }
+    }
+
+    private void SetCleanBusy(bool busy)
+    {
+        BtnCleanAll.IsEnabled = BtnCleanTemp.IsEnabled = BtnEmptyRecycle.IsEnabled = BtnFlushDns.IsEnabled = !busy;
+        BtnRefreshServices.IsEnabled = BtnStopServices.IsEnabled = !busy;
+    }
+
+    private static string DescribeCleanup(long freedBytes, int files, int skipped, int folders, string? error = null)
+    {
+        string size = freedBytes >= 1073741824 ? $"{freedBytes / 1073741824.0:0.00} GB"
+                    : freedBytes >= 1048576 ? $"{freedBytes / 1048576.0:N0} MB"
+                    : $"{freedBytes / 1024.0:N0} KB";
+        var parts = new List<string> { $"Liberado: {size}" };
+        if (files > 0) parts.Add($"{files:N0} arquivos apagados");
+        if (folders > 0) parts.Add($"{folders} pastas verificadas");
+        if (skipped > 0) parts.Add($"{skipped:N0} itens em uso mantidos");
+        if (error != null) parts.Add(error);
+        return string.Join(" · ", parts);
+    }
+
+    private string DescribeStop(ServiceStopResult result)
+    {
+        string Names(IEnumerable<string> names) => string.Join(", ", names.Select(n =>
+            _services.FirstOrDefault(s => s.Name.Equals(n, StringComparison.OrdinalIgnoreCase))?.Title ?? n));
+        var parts = new List<string>();
+        if (result.Stopped.Count > 0) parts.Add($"encerrados: {Names(result.Stopped)}");
+        if (result.Failed.Count > 0) parts.Add($"não encerraram: {Names(result.Failed)}");
+        return string.Join(" · ", parts);
+    }
 
     private async void BtnOptimize_Click(object sender, RoutedEventArgs e)
     {
