@@ -70,8 +70,11 @@ App WPF (.NET 8) com:
   e **verificação de estabilidade** de overclock (CPU, GPU ou ambos; 5/15/30 min) com limites de segurança de temperatura, leitura de erros
   de hardware (WHEA, reset de driver de vídeo), veredito, histórico e guia de BIOS conforme a placa-mãe e a CPU.
 - **RESET OTIMIZA** (`Optimizer.cs`, `WindowsTweaks.cs`, `SystemCleanup.cs`): um botão que limpa a memória em espera (como o ISLC) e enxuga a RAM dos
-  processos, e fecha os programas marcados (pré-marca só os seguros: OneDrive, Teams, Widgets, Adobe...; programas com janela são
-  fechados sem forçar). Ajustes do Windows com interruptor e "Restaurar originais": plano Alto desempenho, Modo de Jogo, desativar
+  processos, e fecha os programas marcados (pré-marca só os seguros: OneDrive, Teams, Widgets, Dispositivos móveis, Adobe...; programas com janela são
+  fechados sem forçar e apps que só rodam em segundo plano são encerrados). A lista mostra também apps sem janela
+  (Armoury Crate, ASUS Framework, Steam, Discord, WebView2, Bun...) e tem a opção "Mostrar também processos do sistema"
+  e o botão "Marcar sem janela" para selecionar todos os apps de segundo plano de uma vez.
+  Ajustes do Windows com interruptor e "Restaurar originais": plano Alto desempenho, Modo de Jogo, desativar
   Game DVR, HAGS, otimizações para jogos em janela, aceleração do mouse. Nada que reduza a segurança (Defender, VBS, UAC, Update).
   Limpeza do sistema: **esvaziar a lixeira**, **apagar temporários de todos os usuários e do Windows** (Windows Update, Otimização de
   Entrega, relatórios de erro e cache de shaders; o Prefetch é preservado), **limpar cache DNS** e **encerrar serviços opcionais**

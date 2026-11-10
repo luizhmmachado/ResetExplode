@@ -2103,15 +2103,24 @@
                             <!-- Programas -->
                             <Border Style="{StaticResource CardBorder}" VerticalAlignment="Top">
                                 <StackPanel>
-                                    <Grid Margin="0,0,0,6">
+                                    <StackPanel Margin="0,0,0,6">
                                         <TextBlock Text="PROGRAMAS PARA FECHAR" Style="{StaticResource Label}"/>
-                                        <Button Style="{StaticResource OutlineButton}" Content="ATUALIZAR" Padding="10,4" FontSize="11"
-                                                HorizontalAlignment="Right" VerticalAlignment="Top" Click="BtnRefreshApps_Click"/>
-                                    </Grid>
+                                        <WrapPanel Margin="0,0,0,2">
+                                            <Button Style="{StaticResource OutlineButton}" Content="MARCAR SEM JANELA" Padding="10,4" FontSize="11"
+                                                    Margin="0,0,8,0" ToolTip="Marca todos os apps que rodam em segundo plano (menos ferramentas de desenvolvimento)"
+                                                    Click="BtnAppsBackground_Click"/>
+                                            <Button Style="{StaticResource OutlineButton}" Content="ATUALIZAR" Padding="10,4" FontSize="11"
+                                                    Click="BtnRefreshApps_Click"/>
+                                        </WrapPanel>
+                                    </StackPanel>
                                     <TextBlock Foreground="{DynamicResource Faint}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,10">
                                         Marcados = seguros de fechar durante o jogo. Programas com janela recebem o pedido de
-                                        fechar (como clicar no X) e não são forçados, para não perder nada não salvo.
+                                        fechar (como clicar no X) e não são forçados, para não perder nada não salvo; apps que só
+                                        rodam em segundo plano são encerrados. A lista inclui apps sem janela, como Armoury Crate,
+                                        Steam, Discord e Bun.
                                     </TextBlock>
+                                    <CheckBox x:Name="OptShowAll" Content="MOSTRAR TAMBÉM PROCESSOS DO SISTEMA" FontSize="11"
+                                              Foreground="{DynamicResource Muted}" Margin="0,0,0,10" Click="OptShowAll_Changed"/>
                                     <ItemsControl x:Name="OptApps">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>

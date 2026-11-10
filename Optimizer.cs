@@ -39,32 +39,130 @@ public static class Optimizer
         "ShellExperienceHost", "SearchHost", "SearchIndexer", "TextInputHost", "SecurityHealthService", "SecurityHealthSystray",
         "MsMpEng", "NisSrv", "SgrmBroker", "audiodg", "conhost", "dllhost", "spoolsv", "WmiPrvSE", "LockApp", "ApplicationFrameHost",
         "SystemSettings", "smartscreen", "MemCompression", "Secure System", "WUDFHost", "dasHost", "nvcontainer", "NVDisplay.Container",
-        "atiesrxx", "atieclxx", "amdfendrsr", "RadeonSoftware", "igfxEM", "PawnIO", "ResetExplode", "cmd", "powershell", "WindowsTerminal",
-        "OpenConsole", "devenv", "Code", "dotnet",
+        "atiesrxx", "atieclxx", "amdfendrsr", "RadeonSoftware", "igfxEM", "PawnIO", "ResetExplode", "cmd", "powershell", "pwsh",
+        "WindowsTerminal", "OpenConsole", "devenv", "Code", "dotnet",
+        // Componentes do Windows/segurança que não devem ser encerrados.
+        "backgroundTaskHost", "UserOOBEBroker", "MoNotificationUx", "ShellHost", "CHXSmartScreen", "SecHealthUI",
+        "SecurityHealthHost", "DefenderSessionHelper",
     };
 
     /// <summary>Processos de segundo plano seguros de fechar durante o jogo (pré-marcados).</summary>
     private static readonly Dictionary<string, string> SuggestedApps = new(StringComparer.OrdinalIgnoreCase)
     {
         ["OneDrive"] = "Sincronização do OneDrive (pode usar disco e rede)",
+        ["OneDriveStandaloneUpdater"] = "Atualizador do OneDrive",
         ["ms-teams"] = "Microsoft Teams",
         ["Teams"] = "Microsoft Teams (clássico)",
         ["Skype"] = "Skype",
         ["PhoneExperienceHost"] = "Vincular ao Celular",
         ["YourPhone"] = "Vincular ao Celular",
+        ["CrossDeviceService"] = "Dispositivos móveis (vínculo do celular)",
+        ["CrossDeviceResume"] = "Retomada de dispositivos móveis",
         ["Widgets"] = "Widgets do Windows",
         ["WidgetService"] = "Serviço de Widgets",
+        ["WidgetBoard"] = "Widgets do Windows",
+        ["MicrosoftStartFeedProvider"] = "Feed de notícias/widgets do Windows",
         ["AdobeARM"] = "Atualizador da Adobe",
         ["CCXProcess"] = "Adobe Creative Cloud",
         ["Creative Cloud"] = "Adobe Creative Cloud",
         ["AdobeIPCBroker"] = "Adobe (comunicação em segundo plano)",
         ["GoogleDriveFS"] = "Google Drive",
+        ["GoogleUpdate"] = "Atualizador do Google",
+        ["GoogleCrashHandler"] = "Relatório de erros do Google",
+        ["GoogleCrashHandler64"] = "Relatório de erros do Google",
         ["Dropbox"] = "Dropbox",
         ["Cortana"] = "Cortana",
         ["OfficeClickToRun"] = "Atualizador do Office",
+        ["MicrosoftEdgeUpdate"] = "Atualizador do Microsoft Edge",
     };
 
-    public static List<BackgroundApp> ListApps()
+    /// <summary>
+    /// Apps de segundo plano conhecidos que aparecem na lista mas não vêm pré-marcados:
+    /// o usuário decide se aquele app (Armoury Crate, Steam, Discord, Bun...) pode fechar.
+    /// </summary>
+    private static readonly Dictionary<string, string> KnownBackground = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["msedge"] = "Microsoft Edge (processos em segundo plano)",
+        ["msedgewebview2"] = "Microsoft Edge WebView2 (usado por vários apps)",
+        ["GameBar"] = "Xbox Game Bar",
+        ["GameBarFTPServer"] = "Xbox Game Bar",
+        ["Copilot"] = "Microsoft Copilot",
+        ["bun"] = "Bun (runtime JavaScript)",
+        ["opencode-cli"] = "Bun (runtime JavaScript usado por ferramentas de desenvolvimento)",
+
+        // ASUS / Armoury Crate
+        ["ArmouryCrate"] = "Armoury Crate (ASUS)",
+        ["ArmouryCrate.UserSessionHelper"] = "Armoury Crate (auxiliar da sessão)",
+        ["ArmouryCrate.Service"] = "Armoury Crate (serviço)",
+        ["ArmouryCrateControlInterface"] = "Armoury Crate (interface de controle)",
+        ["ArmourySocketServer"] = "Armoury Crate (servidor local)",
+        ["asus_framework"] = "ASUS Framework",
+        ["AsusAppService"] = "ASUS App Service",
+        ["ASUSFrameworkService"] = "ASUS Framework Service",
+        ["ROGLiveService"] = "ROG Live Service",
+        ["LightingService"] = "ASUS Aura (iluminação)",
+        ["AsusCertService"] = "ASUS Certificate Service",
+        ["AsusFanControlService"] = "ASUS Fan Control",
+        ["AsusOptimization"] = "ASUS Optimization",
+        ["AsusSoftwareManager"] = "ASUS Software Manager",
+        ["AsusUpdateChecker"] = "ASUS Update Checker",
+        ["AsusSystemAnalysis"] = "ASUS System Analysis",
+        ["AsusSystemDiagnosis"] = "ASUS System Diagnosis",
+        ["AsusScreenXpert"] = "ASUS ScreenXpert",
+        ["AsusTPCenter"] = "ASUS Touchpad",
+        ["AsusHotplugCpu"] = "ASUS Hotplug CPU",
+        ["AcPowerNotification"] = "ASUS (notificações de energia)",
+
+        // Periféricos, áudio e iluminação
+        ["RazerSynapse"] = "Razer Synapse",
+        ["RazerCentralService"] = "Razer Central",
+        ["RazerCortex"] = "Razer Cortex",
+        ["lghub"] = "Logitech G HUB",
+        ["lghub_agent"] = "Logitech G HUB",
+        ["LogiOptionsMgr"] = "Logitech Options+",
+        ["iCUE"] = "Corsair iCUE",
+        ["Corsair.Service"] = "Corsair iCUE (serviço)",
+        ["MSIAfterburner"] = "MSI Afterburner",
+        ["MSICenter"] = "MSI Center",
+        ["GigabyteControlCenter"] = "Gigabyte Control Center",
+        ["SteelSeriesGG"] = "SteelSeries GG",
+        ["SteelSeriesEngine"] = "SteelSeries Engine",
+        ["WallpaperEngine"] = "Wallpaper Engine",
+        ["wallpaper32"] = "Wallpaper Engine",
+        ["wallpaper64"] = "Wallpaper Engine",
+        ["Voicemod"] = "Voicemod",
+        ["Nahimic"] = "Nahimic (áudio)",
+        ["SonicStudio"] = "ASUS Sonic Studio",
+        ["SonicRadar"] = "ASUS Sonic Radar",
+        ["WavesSvc"] = "Waves Audio",
+        ["DolbyDAX"] = "Dolby Audio",
+        ["RealtekAudioConsole"] = "Realtek Audio Console",
+
+        // Launchers, jogos e comunicação
+        ["DiscordSystemHelper"] = "Auxiliar do Discord",
+        ["steam"] = "Steam",
+        ["steamwebhelper"] = "Steam (interface)",
+        ["Spotify"] = "Spotify",
+        ["EpicGamesLauncher"] = "Epic Games Launcher",
+        ["Battle.net"] = "Battle.net",
+        ["RiotClientServices"] = "Riot Client",
+        ["EADesktop"] = "EA app",
+        ["UbisoftConnect"] = "Ubisoft Connect",
+        ["GalaxyClient"] = "GOG Galaxy",
+        ["Playnite"] = "Playnite",
+        ["obs64"] = "OBS Studio",
+        ["obs32"] = "OBS Studio",
+        ["Streamlabs"] = "Streamlabs",
+        ["Docker Desktop"] = "Docker Desktop",
+        ["com.docker.backend"] = "Docker Desktop",
+    };
+
+    /// <summary>
+    /// Lista os programas da sessão do usuário. Por padrão mostra os que têm janela, os apps de segundo
+    /// plano conhecidos e os programas de terceiros (mesmo sem janela, como Armoury Crate e Bun).
+    /// <paramref name="showAll"/> também inclui os processos do sistema que não estão na lista protegida.
+    /// </summary>
+    public static List<BackgroundApp> ListApps(bool showAll = false)
     {
         int session = Process.GetCurrentProcess().SessionId;
         var groups = new Dictionary<string, List<Process>>(StringComparer.OrdinalIgnoreCase);
@@ -83,12 +181,22 @@ public static class Optimizer
         foreach (var (name, procs) in groups)
         {
             bool hasWindow = procs.Any(p => SafeWindow(p) != IntPtr.Zero);
-            bool suggested = SuggestedApps.ContainsKey(name);
-            if (!hasWindow && !suggested) continue; // processos auxiliares sem janela ficam de fora
+            bool suggested = false;
+            string? description = null;
+            if (SuggestedApps.TryGetValue(name, out string? suggestedDetail)) { suggested = true; description = suggestedDetail; }
+            else if (KnownBackground.TryGetValue(name, out string? knownDetail)) description = knownDetail;
+            bool known = description != null;
 
-            string title = name, detail;
+            string company = procs.Select(SafeCompany).FirstOrDefault(c => c.Length > 0) ?? "";
+            string path = procs.Select(SafePath).FirstOrDefault(p => p.Length > 0) ?? "";
+            bool thirdParty = (!string.IsNullOrEmpty(company) && !company.Contains("Microsoft", StringComparison.OrdinalIgnoreCase))
+                              || (!string.IsNullOrEmpty(path) && !IsWindowsPath(path));
+
+            if (!showAll && !hasWindow && !known && !thirdParty) continue;
+
+            string title = name;
             try { title = procs[0].MainModule?.FileVersionInfo.FileDescription is { Length: > 0 } d ? d : name; } catch { }
-            detail = suggested ? SuggestedApps[name] : hasWindow ? "Programa aberto" : "";
+            string detail = description ?? (hasWindow ? "Programa aberto" : !string.IsNullOrEmpty(company) ? company : "Segundo plano");
             if (procs.Count > 1) detail += $" · {procs.Count} processos";
             long mem = procs.Sum(p => { try { return p.WorkingSet64; } catch { return 0L; } });
 
@@ -98,14 +206,23 @@ public static class Optimizer
                 HasWindow = hasWindow, Suggested = suggested, Selected = suggested
             });
         }
-        return result.OrderByDescending(a => a.Suggested).ThenByDescending(a => a.MemoryBytes).ToList();
+        return result.OrderByDescending(a => a.Suggested).ThenByDescending(a => a.HasWindow).ThenByDescending(a => a.MemoryBytes).ToList();
     }
 
     private static IntPtr SafeWindow(Process p) { try { return p.MainWindowHandle; } catch { return IntPtr.Zero; } }
+    private static string SafePath(Process p) { try { return p.MainModule?.FileName ?? ""; } catch { return ""; } }
+    private static string SafeCompany(Process p) { try { return p.MainModule?.FileVersionInfo.CompanyName ?? ""; } catch { return ""; } }
+
+    /// <summary>Arquivos em C:\Windows são componentes do próprio Windows; o resto é programa instalado.</summary>
+    private static bool IsWindowsPath(string path)
+    {
+        string root = Environment.GetFolderPath(Environment.SpecialFolder.Windows).TrimEnd('\\') + "\\";
+        return path.StartsWith(root, StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>
     /// Fecha os programas: com janela → pede para fechar (como clicar no X), sem forçar, para não perder nada
-    /// não salvo; sem janela (segundo plano) → encerra.
+    /// não salvo; programa que só roda em segundo plano (sem janela) → encerra, inclusive os auxiliares.
     /// </summary>
     public static CloseResult CloseApps(IEnumerable<BackgroundApp> apps)
     {
@@ -119,7 +236,7 @@ public static class Optimizer
                 try
                 {
                     if (SafeWindow(p) != IntPtr.Zero) p.CloseMainWindow();
-                    else if (app.Suggested) p.Kill();
+                    else if (!app.HasWindow) p.Kill(); // app só de segundo plano: encerra os auxiliares também
                 }
                 catch { }
             }

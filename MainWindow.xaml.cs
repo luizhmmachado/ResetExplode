@@ -852,11 +852,34 @@ public partial class MainWindow : Window
 
     private void RefreshApps()
     {
-        _apps = Optimizer.ListApps();
+        _apps = Optimizer.ListApps(OptShowAll.IsChecked == true);
         OptApps.ItemsSource = _apps;
     }
 
     private void BtnRefreshApps_Click(object sender, RoutedEventArgs e) => RefreshApps();
+
+    private void BtnAppsBackground_Click(object sender, RoutedEventArgs e)
+    {
+        foreach (var app in _apps)
+            if (!app.HasWindow && !IsDevelopmentTool(app.ProcessName)) app.Selected = true;
+    }
+
+    /// <summary>Ferramentas de desenvolvimento/IA não entram no "marcar sem janela" para não derrubar trabalho em andamento.</summary>
+    private static bool IsDevelopmentTool(string name) =>
+        name.Equals("OpenCode", StringComparison.OrdinalIgnoreCase)
+        || name.Equals("opencode-cli", StringComparison.OrdinalIgnoreCase)
+        || name.Equals("bun", StringComparison.OrdinalIgnoreCase)
+        || name.Equals("node", StringComparison.OrdinalIgnoreCase)
+        || name.Equals("python", StringComparison.OrdinalIgnoreCase)
+        || name.Equals("python3", StringComparison.OrdinalIgnoreCase)
+        || name.Equals("java", StringComparison.OrdinalIgnoreCase)
+        || name.Equals("docker", StringComparison.OrdinalIgnoreCase)
+        || name.Equals("com.docker.backend", StringComparison.OrdinalIgnoreCase);
+
+    private void OptShowAll_Changed(object sender, RoutedEventArgs e)
+    {
+        if (OptApps != null) RefreshApps();
+    }
 
     // ----- Limpeza do sistema (lixeira, temporários, DNS) e serviços opcionais -----
 

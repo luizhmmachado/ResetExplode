@@ -1,3 +1,18 @@
+## Novidades da v0.18
+
+**RESET OTIMIZA · Lista completa de programas**
+- A lista "PROGRAMAS PARA FECHAR" agora mostra também os apps que rodam **sem janela**, como Armoury Crate,
+  ASUS Framework, Steam, Discord, WebView2 e Bun — antes eles eram escondidos e só apareciam no Gerenciador de Tarefas.
+- Apps de segundo plano conhecidos ganharam descrição (Armoury Crate, Razer, Logitech, Corsair, MSI, Wallpaper Engine,
+  Nahimic, launchers etc.) e os seguros continuam pré-marcados.
+- "Dispositivos móveis" (CrossDeviceService/CrossDeviceResume), Widgets e o feed de notícias agora aparecem e são
+  pré-selecionados.
+- Novo interruptor **MOSTRAR TAMBÉM PROCESSOS DO SISTEMA** para ver o restante da sessão sem os componentes protegidos.
+- Botão **MARCAR SEM JANELA** para selecionar de uma vez todos os apps de segundo plano (Armoury Crate, ASUS, Discord,
+  Steam, WebView2...), sem incluir ferramentas de desenvolvimento como OpenCode/Bun, Node, Python e Docker.
+- Apps que só rodam em segundo plano são encerrados por completo ao aplicar o RESET OTIMIZA; apps com janela continuam
+  recebendo o pedido de fechar (como clicar no X), sem forçar.
+
 ## Novidades da v0.17
 
 **RESET OTIMIZA · Limpeza do sistema**
