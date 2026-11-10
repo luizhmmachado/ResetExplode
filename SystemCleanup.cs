@@ -144,7 +144,8 @@ public static class SystemCleanup
         long before = RecycleBinBytes();
         int hr = SHEmptyRecycleBin(IntPtr.Zero, null, 0x1 /*NOCONFIRMATION*/ | 0x2 /*NOPROGRESSUI*/ | 0x4 /*NOSOUND*/);
         long after = RecycleBinBytes();
-        string? error = hr == 0 ? null : $"o Windows recusou (0x{hr:X8})";
+        // S_FALSE (1) e "já estava vazia" não são erros: só avisa se havia algo e o Windows recusou.
+        string? error = (hr is 0 or 1 || before == 0) ? null : $"o Windows recusou (0x{hr:X8})";
         return new CleanupReport(Math.Max(0, before - after), 0, 0, 0, error);
     }
 
