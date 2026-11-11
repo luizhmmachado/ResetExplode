@@ -79,6 +79,7 @@ App WPF (.NET 8) com:
   Limpeza do sistema: **esvaziar a lixeira**, **apagar temporários de todos os usuários e do Windows** (Windows Update, Otimização de
   Entrega, relatórios de erro e cache de shaders; o Prefetch é preservado), **limpar cache DNS** e **encerrar serviços opcionais**
   (telemetria, relatórios de erro, fax, registro remoto...), com "Limpeza completa" para rodar tudo de uma vez.
+  Na lista de serviços, **ENCERRAR SELECIONADOS** para os marcados e **PARAR TODOS** para encerrar todos os que estão em execução.
 - **RESET MAKER** (Arduino, ESP32 e conversores USB-serial):
   - *Portas COM* (`UsbCleaner.cs`): lista e remove registros de dispositivos USB/seriais ausentes ("fantasmas" de Arduino,
     ESP32, CH340, FTDI, CP210x...) e libera os números COM presos no ComDB, com backup para desfazer. Resolve a IDE do Arduino

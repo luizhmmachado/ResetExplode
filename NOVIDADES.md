@@ -1,3 +1,11 @@
+## Novidades da v0.19
+
+**RESET OTIMIZA · Serviços desnecessários**
+- Novo botão **PARAR TODOS**: encerra de uma vez todos os serviços opcionais que estão em execução, sem precisar
+  marcar um por um. Mostra a lista antes de confirmar e avisa que impressora, busca, Bluetooth e Xbox/Game Pass
+  também serão parados.
+- Como nos demais botões, nada é desinstalado: os serviços voltam ao normal no próximo reinício do Windows.
+
 ## Novidades da v0.18
 
 **RESET OTIMIZA · Lista completa de programas**

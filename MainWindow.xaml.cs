@@ -994,12 +994,34 @@ public partial class MainWindow : Window
                                 "Eles não são desinstalados: voltam ao normal no próximo reinício do Windows. Continuar?",
                                 "RESET OTIMIZA", MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (r != MessageBoxResult.Yes) return;
+        await StopServicesAsync(selected);
+    }
 
+    private async void BtnStopAllServices_Click(object sender, RoutedEventArgs e)
+    {
+        var running = _services.Where(s => s.Running).ToList();
+        if (running.Count == 0)
+        {
+            MessageBox.Show("Nenhum serviço opcional está em execução agora.", "RESET OTIMIZA",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        string list = string.Join("\n", running.Select(s => $"  • {s.Title}"));
+        var r = MessageBox.Show($"Parar TODOS os {running.Count} serviços opcionais em execução?\n\n{list}\n\n" +
+                                "Isso inclui serviços que você talvez use (impressora, busca, Bluetooth, Xbox/Game Pass...). " +
+                                "Eles não são desinstalados e voltam ao normal no próximo reinício do Windows. Continuar?",
+                                "RESET OTIMIZA", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (r != MessageBoxResult.Yes) return;
+        await StopServicesAsync(running);
+    }
+
+    private async Task StopServicesAsync(IReadOnlyList<OptionalService> services)
+    {
         SetCleanBusy(true);
         ServicesResult.Text = "Encerrando os serviços…";
         try
         {
-            var stop = await Task.Run(() => SystemCleanup.StopServices(selected.Select(s => s.Name)));
+            var stop = await Task.Run(() => SystemCleanup.StopServices(services.Select(s => s.Name)));
             string summary = await RefreshServicesAsync();
             ServicesResult.Text = $"{DescribeStop(stop)} · {summary}";
         }
@@ -1023,7 +1045,7 @@ public partial class MainWindow : Window
     private void SetCleanBusy(bool busy)
     {
         BtnCleanAll.IsEnabled = BtnCleanTemp.IsEnabled = BtnEmptyRecycle.IsEnabled = BtnFlushDns.IsEnabled = !busy;
-        BtnRefreshServices.IsEnabled = BtnStopServices.IsEnabled = !busy;
+        BtnRefreshServices.IsEnabled = BtnStopServices.IsEnabled = BtnStopAllServices.IsEnabled = !busy;
     }
 
     private static string DescribeCleanup(long freedBytes, int files, int skipped, int folders, string? error = null)
